@@ -4,7 +4,27 @@ curl -v -k https://<splunk-host>:8088/services/collector/event \
   -d @<(echo "{\"event\": \"$(sed 's/"/\\"/g' report.html | sed ':a;N;$!ba;s/\n/ /g')\", \"sourcetype\": \"custom_html\", \"index\": \"main\"}")
 
 index=main sourcetype=custom_html | sort -_time desc | table _time, _raw
+------------------------
+PYTHON
+import json
 
+# Read your HTML file
+with open('your_file.html', 'r', encoding='utf-8') as f:
+    html_content = f.read()
+
+# Prepare JSON payload
+payload = {
+    "event": html_content,
+    "sourcetype": "custom_html",
+    "index": "main"
+}
+
+# Convert to JSON string (escaped)
+json_data = json.dumps(payload)
+
+print(json_data)  # You can save or send this string to Splunk
+
+---------------------------
 
 <dashboard>
   <label>HTML Renderer</label>
