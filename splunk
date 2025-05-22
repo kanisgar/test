@@ -62,44 +62,54 @@ print("JSON saved to output.json")
 
 
 ---------------------------
-<dashboard>
-  <label>HTML Renderer</label>
-  <row>
-    <panel>
-      <title>Rendered HTML</title>
-      <html>
-        <![CDATA[
-        <div id="rendered_html" style="border:1px solid #ccc; padding:10px; background:#fff;"></div>
+Handling Python with more complex html where the above is for simple Sample.html
 
-        <script>
-          require([
-            "splunkjs/mvc/searchmanager",
-            "splunkjs/mvc"
-          ], function(SearchManager, mvc) {
+import json
+import re
 
-            var search = new SearchManager({
-              id: "htmlSearch",
-              search: "index=main sourcetype=custom_html | sort -_time desc | head 1 | table _raw",
-              preview: false
-            });
+def parse_html_table(html):
+    # Find the first <table ...> ... </table>
+    table_match = re.search(r'<table[^>]*>(.*?)</table>', html, re.DOTALL | re.IGNORECASE)
+    if not table_match:
+        print("No table found")
+        return []
 
-            search.data("results").on("data", function(results) {
-              if (results.hasData()) {
-                var htmlData = results.data().rows[0][0];
-                
-                // Decode escaped quotes (optional depending on encoding)
-                htmlData = htmlData.replace(/\\"/g, '"');
+    table_html = table_match.group(1)
 
-                // Inject as HTML content
-                document.getElementById("rendered_html").innerHTML = htmlData;
-              } else {
-                document.getElementById("rendered_html").innerHTML = "<p>No HTML content found.</p>";
-              }
-            });
-          });
-        </script>
-        ]]>
-      </html>
-    </panel>
-  </row>
-</dashboard>
+    # Extract all rows between <tr ...>...</tr> (ignore attributes inside tr)
+    rows = re.findall(r'<tr[^>]*>(.*?)</tr>', table_html, re.DOTALL | re.IGNORECASE)
+    if not rows:
+        print("No rows found in table")
+        return []
+
+    # Extract header columns from first row
+    headers = re.findall(r'<th[^>]*>(.*?)</th>', rows[0], re.DOTALL | re.IGNORECASE)
+    headers = [re.sub(r'<.*?>', '', h).strip() for h in headers]  # strip inner tags if any
+
+    data = []
+    # Process each data row (skip header)
+    for row_html in rows[1:]:
+        # Extract all <td> contents, ignoring tags inside td
+        cols = re.findall(r'<td[^>]*>(.*?)</td>', row_html, re.DOTALL | re.IGNORECASE)
+        cols = [re.sub(r'<.*?>', '', c).strip() for c in cols]
+
+        if len(cols) == len(headers):
+            entry = dict(zip(headers, cols))
+            data.append(entry)
+        else:
+            print("Skipping a row due to column mismatch")
+
+    return data
+
+# Read your HTML file
+with open('your_file.html', 'r', encoding='utf-8') as f:
+    html_content = f.read()
+
+table_data = parse_html_table(html_content)
+
+# Output JSON
+with open('output.json', 'w', encoding='utf-8') as f:
+    json.dump(table_data, f, indent=2)
+
+print("Parsed JSON saved to output.json")
+
