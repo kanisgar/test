@@ -1,0 +1,106 @@
+<dashboard>
+  <label>Job Status Dashboard</label>
+
+  <fieldset submitButton="false">
+    <!-- Job Name Filter -->
+    <input type="dropdown" token="job_name_filter" searchWhenChanged="true">
+      <label>Job Name</label>
+      <search>
+        <query>
+          index=appl_arc817_prod_na sourcetype=job_status_json
+          | stats count by "Job Name"
+          | sort "Job Name"
+        </query>
+      </search>
+      <fieldForLabel>Job Name</fieldForLabel>
+      <fieldForValue>Job Name</fieldForValue>
+      <default>*</default>
+      <prefix>*</prefix>
+      <suffix>*</suffix>
+      <choice value="*">All</choice>
+    </input>
+
+    <!-- Status Filter -->
+    <input type="dropdown" token="status_filter" searchWhenChanged="true">
+      <label>Status</label>
+      <search>
+        <query>
+          index=appl_arc817_prod_na sourcetype=job_status_json
+          | stats count by Status
+          | sort Status
+        </query>
+      </search>
+      <fieldForLabel>Status</fieldForLabel>
+      <fieldForValue>Status</fieldForValue>
+      <default>*</default>
+      <prefix>*</prefix>
+      <suffix>*</suffix>
+      <choice value="*">All</choice>
+    </input>
+
+    <!-- Target Table Filter -->
+    <input type="dropdown" token="target_table_filter" searchWhenChanged="true">
+      <label>Target Table</label>
+      <search>
+        <query>
+          index=appl_arc817_prod_na sourcetype=job_status_json
+          | stats count by "Target Table"
+          | sort "Target Table"
+        </query>
+      </search>
+      <fieldForLabel>Target Table</fieldForLabel>
+      <fieldForValue>Target Table</fieldForValue>
+      <default>*</default>
+      <prefix>*</prefix>
+      <suffix>*</suffix>
+      <choice value="*">All</choice>
+    </input>
+
+    <!-- Nanon Table Filter -->
+    <input type="dropdown" token="nanon_table_filter" searchWhenChanged="true">
+      <label>Nanon Table</label>
+      <search>
+        <query>
+          index=appl_arc817_prod_na sourcetype=job_status_json
+          | stats count by "Nanon table"
+          | sort "Nanon table"
+        </query>
+      </search>
+      <fieldForLabel>Nanon table</fieldForLabel>
+      <fieldForValue>Nanon table</fieldForValue>
+      <default>*</default>
+      <prefix>*</prefix>
+      <suffix>*</suffix>
+      <choice value="*">All</choice>
+    </input>
+
+    <!-- Time Picker -->
+    <input type="time" token="time_range">
+      <label>Select Time Range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+
+  <!-- Main Table Panel -->
+  <row>
+    <panel>
+      <title>Job Status Report</title>
+      <table>
+        <search>
+          <query>
+            index=appl_arc817_prod_na sourcetype=job_status_json
+            earliest=$time_range.earliest$ latest=$time_range.latest$
+            | search "Job Name"="$job_name_filter$" Status="$status_filter$" "Target Table"="$target_table_filter$" "Nanon table"="$nanon_table_filter$"
+            | sort 0 "Job Name"
+            | table "Job Name" "Run Date" Status "Target Table" "Nanon table"
+          </query>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>
