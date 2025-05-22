@@ -7,6 +7,19 @@ curl -v -k https://<splunk-host>:8088/services/collector/event \
 
 index=main sourcetype=custom_html | sort -_time desc | table _time, _raw
 ------------------------
+NEW MIGHT WORK CURL
+
+HEC_URL="https://your-splunk-server:8088/services/collector/event"
+HEC_TOKEN="YOUR_SPLUNK_HEC_TOKEN"
+
+cat output.json | jq -c '.[] | {event: ., sourcetype: "your_sourcetype", index: "your_index"}' | \
+while read payload; do
+  curl -k -X POST "$HEC_URL" \
+    -H "Authorization: Splunk $HEC_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d
+
+------------------------
 PYTHON
 import json
 
