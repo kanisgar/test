@@ -17,7 +17,7 @@ while read payload; do
   curl -k -X POST "$HEC_URL" \
     -H "Authorization: Splunk $HEC_TOKEN" \
     -H "Content-Type: application/json" \
-    -d
+    -d "$payload"
 
 ------------------------
 PYTHON
