@@ -104,3 +104,57 @@
     </panel>
   </row>
 </dashboard>
+
+-----------------------------------------------------------
+import json
+import re
+
+def parse_html_table(html):
+    # Find the first <table ...> ... </table>
+    table_match = re.search(r'<table[^>]*>(.*?)</table>', html, re.DOTALL | re.IGNORECASE)
+    if not table_match:
+        print("No table found")
+        return []
+
+    table_html = table_match.group(1)
+
+    # Extract all rows between <tr ...>...</tr> (ignore attributes inside tr)
+    rows = re.findall(r'<tr[^>]*>(.*?)</tr>', table_html, re.DOTALL | re.IGNORECASE)
+    if not rows:
+        print("No rows found in table")
+        return []
+
+    # Extract header columns from first row
+    headers = re.findall(r'<th[^>]*>(.*?)</th>', rows[0], re.DOTALL | re.IGNORECASE)
+    headers = [re.sub(r'<.*?>', '', h).strip() for h in headers]
+
+    data = []
+    # Process each data row (skip header)
+    for row_html in rows[1:]:
+        # Extract all <td> contents, ignoring tags inside td
+        cols = re.findall(r'<td[^>]*>(.*?)</td>', row_html, re.DOTALL | re.IGNORECASE)
+        cols = [re.sub(r'<.*?>', '', c).strip() for c in cols]
+
+        # Replace empty or whitespace-only values with "blank"
+        cols = [c if c else "blank" for c in cols]
+
+        if len(cols) == len(headers):
+            entry = dict(zip(headers, cols))
+            data.append(entry)
+        else:
+            print("Skipping a row due to column mismatch")
+
+    return data
+
+# Read your HTML file
+with open('your_file.html', 'r', encoding='utf-8') as f:
+    html_content = f.read()
+
+table_data = parse_html_table(html_content)
+
+# Output JSON
+with open('output.json', 'w', encoding='utf-8') as f:
+    json.dump(table_data, f, indent=2)
+
+print("Parsed JSON saved to output.json")
+
