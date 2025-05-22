@@ -24,37 +24,38 @@
 
 The below is for splunk
 <dashboard>
-  <label>Job HTML Viewer</label>
+  <label>Rendered Job HTML</label>
   <row>
     <panel>
       <html>
         <![CDATA[
-        <iframe id="html_viewer" width="100%" height="400px" style="border:1px solid #ccc;"></iframe>
-        <script>
-          require([
-            "splunkjs/mvc",
-            "splunkjs/mvc/searchmanager",
-            "splunkjs/mvc/simplexml/ready!"
-          ], function(mvc, SearchManager) {
-            var search = new SearchManager({
-              id: "htmlSearch",
-              search: "index=main sourcetype=custom_html | sort -_time desc | head 1 | table _raw",
-              autostart: true
-            });
+          <iframe id="html_viewer" width="100%" height="400px" style="border:1px solid #ccc;"></iframe>
+          <script>
+            require([
+              "splunkjs/mvc",
+              "splunkjs/mvc/searchmanager",
+              "splunkjs/mvc/simplexml/ready!"
+            ], function(mvc, SearchManager) {
+              var search = new SearchManager({
+                id: "htmlSearch",
+                search: "index=main sourcetype=custom_html | sort -_time desc | head 1 | table _raw",
+                autostart: true
+              });
 
-            search.data("results").on("data", function(results) {
-              if (results.hasData()) {
-                var html = results.data().rows[0][0];
-                var blob = new Blob([html], { type: 'text/html' });
-                var blobURL = URL.createObjectURL(blob);
-                document.getElementById("html_viewer").src = blobURL;
-              }
+              search.data("results").on("data", function(results) {
+                if (results.hasData()) {
+                  var html = results.data().rows[0][0];
+                  var blob = new Blob([html], { type: 'text/html' });
+                  var blobURL = URL.createObjectURL(blob);
+                  document.getElementById("html_viewer").src = blobURL;
+                }
+              });
             });
-          });
-        </script>
+          </script>
         ]]>
       </html>
     </panel>
   </row>
 </dashboard>
+
 
