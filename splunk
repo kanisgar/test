@@ -1,0 +1,6 @@
+curl -v -k https://<splunk-host>:8088/services/collector/event \
+  -H "Authorization: Splunk <SPLUNK_HEC_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d @<(echo "{\"event\": \"$(sed 's/"/\\"/g' report.html | sed ':a;N;$!ba;s/\n/ /g')\", \"sourcetype\": \"custom_html\", \"index\": \"main\"}")
+
+index=main sourcetype=custom_html | sort -_time desc | table _time, _raw
