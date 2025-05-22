@@ -1,17 +1,42 @@
 <dashboard>
   <label>Job Status Dashboard</label>
+
+  <!-- Time Picker & Job Name Filter -->
+  <fieldset submitButton="true">
+    <input type="text" token="job_name_filter">
+      <label>Filter by Job Name (leave empty for all)</label>
+      <default>*</default>
+    </input>
+    <input type="time" token="time_range">
+      <label>Time Range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+
+  <!-- Main Table -->
   <row>
     <panel>
-      <title>Job Status Overview</title>
+      <title>All Job Status (Ordered by Job Name)</title>
       <table>
         <search>
-          <query>index=appl_arc817_prod_na sourcetype=job_status_json 
-          | table "Job Name" "Run Date" Status "Target Table" "Nanon table"</query>
+          <query>
+            index=appl_arc817_prod_na sourcetype=job_status_json
+            earliest=$time_range.earliest$ latest=$time_range.latest$
+            | search "Job Name"="$job_name_filter$"
+            | sort 0 "Job Name"
+            | table "Job Name" "Run Date" Status "Target Table" "Nanon table"
+          </query>
         </search>
+        <option name="count">20</option> <!-- Show 20 rows per page -->
+        <option name="drilldown">none</option>
       </table>
     </panel>
   </row>
 </dashboard>
+
 
 
 
