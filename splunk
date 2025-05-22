@@ -1,3 +1,5 @@
+cat output.json | jq -c '.[] | {event: ., sourcetype: "your_sourcetype", index: "your_index"}' | \
+=================================================================
 curl -v -k https://<splunk-host>:8088/services/collector/event \
   -H "Authorization: Splunk <SPLUNK_HEC_TOKEN>" \
   -H "Content-Type: application/json" \
