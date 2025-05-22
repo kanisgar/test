@@ -25,7 +25,34 @@ json_data = json.dumps(payload)
 print(json_data)  # You can save or send this string to Splunk
 
 ---------------------------
+from bs4 import BeautifulSoup
+import json
 
+# Read your HTML file
+with open('your_file.html', 'r', encoding='utf-8') as f:
+    html_content = f.read()
+
+# Parse HTML
+soup = BeautifulSoup(html_content, 'html.parser')
+
+# Find the table (assuming only one)
+table = soup.find('table')
+
+# Extract headers
+headers = [th.text.strip() for th in table.find_all('th')]
+
+# Extract rows
+rows = []
+for tr in table.find_all('tr')[1:]:  # skip header row
+    cells = tr.find_all('td')
+    row_data = {headers[i]: cells[i].text.strip() for i in range(len(cells))}
+    rows.append(row_data)
+
+# Convert to JSON string
+json_data = json.dumps(rows, indent=2)
+print(json_data)
+
+---------------------------
 <dashboard>
   <label>HTML Renderer</label>
   <row>
