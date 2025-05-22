@@ -1,3 +1,22 @@
+<dashboard>
+  <label>Job Status Dashboard</label>
+  <row>
+    <panel>
+      <title>Job Status Overview</title>
+      <table>
+        <search>
+          <query>index=appl_arc817_prod_na sourcetype=job_status_json 
+          | table "Job Name" "Run Date" Status "Target Table" "Nanon table"</query>
+        </search>
+      </table>
+    </panel>
+  </row>
+</dashboard>
+
+
+
+
+
 cat output.json | jq -c '.[] | {event: ., sourcetype: "your_sourcetype", index: "your_index"}' | \
 =================================================================
 curl -v -k https://<splunk-host>:8088/services/collector/event \
