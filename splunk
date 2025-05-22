@@ -25,32 +25,41 @@ json_data = json.dumps(payload)
 print(json_data)  # You can save or send this string to Splunk
 
 ---------------------------
-from bs4 import BeautifulSoup
 import json
+import re
+
+def parse_html_table(html):
+    # Extract all rows between <tr>...</tr>
+    rows = re.findall(r'<tr>(.*?)</tr>', html, re.DOTALL)
+    if not rows:
+        return []
+
+    # Extract header columns
+    headers = re.findall(r'<th>(.*?)</th>', rows[0], re.DOTALL)
+    headers = [h.strip() for h in headers]
+
+    data = []
+    # Process data rows (skip header)
+    for row_html in rows[1:]:
+        cols = re.findall(r'<td>(.*?)</td>', row_html, re.DOTALL)
+        cols = [c.strip() for c in cols]
+        if len(cols) == len(headers):
+            entry = dict(zip(headers, cols))
+            data.append(entry)
+    return data
 
 # Read your HTML file
 with open('your_file.html', 'r', encoding='utf-8') as f:
     html_content = f.read()
 
-# Parse HTML
-soup = BeautifulSoup(html_content, 'html.parser')
+table_data = parse_html_table(html_content)
 
-# Find the table (assuming only one)
-table = soup.find('table')
+# Output JSON
+with open('output.json', 'w', encoding='utf-8') as f:
+    json.dump(table_data, f, indent=2)
 
-# Extract headers
-headers = [th.text.strip() for th in table.find_all('th')]
+print("JSON saved to output.json")
 
-# Extract rows
-rows = []
-for tr in table.find_all('tr')[1:]:  # skip header row
-    cells = tr.find_all('td')
-    row_data = {headers[i]: cells[i].text.strip() for i in range(len(cells))}
-    rows.append(row_data)
-
-# Convert to JSON string
-json_data = json.dumps(rows, indent=2)
-print(json_data)
 
 ---------------------------
 <dashboard>
