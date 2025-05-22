@@ -7,28 +7,37 @@ index=main sourcetype=custom_html | sort -_time desc | table _time, _raw
 
 
 <dashboard>
-  <label>Rendered HTML Viewer</label>
+  <label>HTML Renderer</label>
   <row>
     <panel>
-      <title>Latest HTML Content</title>
+      <title>Rendered HTML</title>
       <html>
         <![CDATA[
-        <div id="html_output" style="border:1px solid #ccc; padding:10px;"></div>
+        <div id="rendered_html" style="border:1px solid #ccc; padding:10px; background:#fff;"></div>
+
         <script>
-          require(['splunkjs/mvc/searchmanager', 'splunkjs/mvc'], function(SearchManager, mvc) {
+          require([
+            "splunkjs/mvc/searchmanager",
+            "splunkjs/mvc"
+          ], function(SearchManager, mvc) {
+
             var search = new SearchManager({
               id: "htmlSearch",
               search: "index=main sourcetype=custom_html | sort -_time desc | head 1 | table _raw",
-              preview: false,
-              autostart: true
+              preview: false
             });
 
             search.data("results").on("data", function(results) {
               if (results.hasData()) {
-                var html = results.data().rows[0][0];
-                document.getElementById("html_output").innerHTML = html;
+                var htmlData = results.data().rows[0][0];
+                
+                // Decode escaped quotes (optional depending on encoding)
+                htmlData = htmlData.replace(/\\"/g, '"');
+
+                // Inject as HTML content
+                document.getElementById("rendered_html").innerHTML = htmlData;
               } else {
-                document.getElementById("html_output").innerHTML = "<p>No HTML content found.</p>";
+                document.getElementById("rendered_html").innerHTML = "<p>No HTML content found.</p>";
               }
             });
           });
