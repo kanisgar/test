@@ -4,3 +4,37 @@ curl -v -k https://<splunk-host>:8088/services/collector/event \
   -d @<(echo "{\"event\": \"$(sed 's/"/\\"/g' report.html | sed ':a;N;$!ba;s/\n/ /g')\", \"sourcetype\": \"custom_html\", \"index\": \"main\"}")
 
 index=main sourcetype=custom_html | sort -_time desc | table _time, _raw
+
+
+<dashboard>
+  <label>Rendered HTML Viewer</label>
+  <row>
+    <panel>
+      <title>Latest HTML Content</title>
+      <html>
+        <![CDATA[
+        <div id="html_output" style="border:1px solid #ccc; padding:10px;"></div>
+        <script>
+          require(['splunkjs/mvc/searchmanager', 'splunkjs/mvc'], function(SearchManager, mvc) {
+            var search = new SearchManager({
+              id: "htmlSearch",
+              search: "index=main sourcetype=custom_html | sort -_time desc | head 1 | table _raw",
+              preview: false,
+              autostart: true
+            });
+
+            search.data("results").on("data", function(results) {
+              if (results.hasData()) {
+                var html = results.data().rows[0][0];
+                document.getElementById("html_output").innerHTML = html;
+              } else {
+                document.getElementById("html_output").innerHTML = "<p>No HTML content found.</p>";
+              }
+            });
+          });
+        </script>
+        ]]>
+      </html>
+    </panel>
+  </row>
+</dashboard>
