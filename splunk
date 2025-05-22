@@ -14,10 +14,19 @@ HEC_TOKEN="YOUR_SPLUNK_HEC_TOKEN"
 
 cat output.json | jq -c '.[] | {event: ., sourcetype: "your_sourcetype", index: "your_index"}' | \
 while read payload; do
+  # Escape all double quotes in the payload
+  escaped_payload=$(echo "$payload" | sed 's/"/\\"/g')
+  
+  # Wrap the escaped JSON string in double quotes (so it's a valid JSON string)
+  wrapped_payload="\"$escaped_payload\""
+  
+  # Send the wrapped, escaped payload as POST data
   curl -k -X POST "$HEC_URL" \
     -H "Authorization: Splunk $HEC_TOKEN" \
     -H "Content-Type: application/json" \
-    -d "$payload"
+    -d "$wrapped_payload"
+done
+
 
 ------------------------
 PYTHON
