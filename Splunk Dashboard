@@ -269,19 +269,20 @@ def parse_html_table(html):
 
     table_html = table_match.group(1)
 
-    # Extract rows
+    # Extract all rows
     rows = re.findall(r'<tr[^>]*>(.*?)</tr>', table_html, re.DOTALL | re.IGNORECASE)
     if not rows:
         print("No rows found in table")
         return []
 
-    # Headers
+    # Extract headers
     headers = re.findall(r'<th[^>]*>(.*?)</th>', rows[0], re.DOTALL | re.IGNORECASE)
     headers = [re.sub(r'<.*?>', '', h).strip() for h in headers]
 
     data = []
     current_ts = datetime.now().isoformat()
 
+    # Process data rows
     for idx, row_html in enumerate(rows[1:], start=1):
         cols = re.findall(r'<td[^>]*>(.*?)</td>', row_html, re.DOTALL | re.IGNORECASE)
         cols = [re.sub(r'<.*?>', '', c).strip() for c in cols]
@@ -292,16 +293,13 @@ def parse_html_table(html):
             entry["id"] = idx
             entry["timestamp"] = current_ts
 
-            # Derive "target table" from "Target Table Name"
-            original_name = entry.get("Target Table Name", "NA")
-            if original_name.upper() in ["NA", "BLANK"]:
-                derived = "NA"
+            # Derive "table name" from "Target Table"
+            target = entry.get("Target Table", "NA")
+            if target.upper() in ["NA", "BLANK"] or "." not in target:
+                entry["table name"] = "NA"
             else:
-                derived = original_name.split(".")[0] + "." + original_name.split(".")[1] if "$" in original_name else original_name
-                # If it has $ partition suffix, remove it
-                derived = re.split(r'\$|\s', derived)[0]
-
-            entry["target table"] = derived
+                # Extract first two dot-separated parts (schema.table)
+                entry["table name"] = ".".join(target.split(".")[:2])
 
             data.append(entry)
         else:
@@ -319,7 +317,8 @@ table_data = parse_html_table(html_content)
 with open('output.json', 'w', encoding='utf-8') as f:
     json.dump(table_data, f, indent=2)
 
-print("Parsed JSON with IDs, timestamps, and derived target tables saved to output.json")
+print("Parsed JSON with IDs, timestamps, and derived table name saved to output.json")
+
 
 -----------------------------------------------------------
 import json
