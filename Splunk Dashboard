@@ -119,23 +119,21 @@ def parse_html_table(html):
 
     table_html = table_match.group(1)
 
-    # Extract all rows between <tr ...>...</tr> (ignore attributes inside tr)
+    # Extract all rows between <tr ...>...</tr>
     rows = re.findall(r'<tr[^>]*>(.*?)</tr>', table_html, re.DOTALL | re.IGNORECASE)
     if not rows:
         print("No rows found in table")
         return []
 
-    # Extract header columns from first row
+    # Extract headers from the first row
     headers = re.findall(r'<th[^>]*>(.*?)</th>', rows[0], re.DOTALL | re.IGNORECASE)
     headers = [re.sub(r'<.*?>', '', h).strip() for h in headers]
 
     data = []
-    # Get current timestamp in ISO format
     current_ts = datetime.now().isoformat()
 
-    # Process each data row (skip header)
-    for row_html in rows[1:]:
-        # Extract all <td> contents, ignoring tags inside td
+    # Process data rows with id
+    for idx, row_html in enumerate(rows[1:], start=1):
         cols = re.findall(r'<td[^>]*>(.*?)</td>', row_html, re.DOTALL | re.IGNORECASE)
         cols = [re.sub(r'<.*?>', '', c).strip() for c in cols]
 
@@ -144,10 +142,11 @@ def parse_html_table(html):
 
         if len(cols) == len(headers):
             entry = dict(zip(headers, cols))
-            entry["timestamp"] = current_ts  # Add timestamp field
+            entry["id"] = idx
+            entry["timestamp"] = current_ts
             data.append(entry)
         else:
-            print("Skipping a row due to column mismatch")
+            print(f"Skipping row {idx} due to column mismatch")
 
     return data
 
@@ -161,6 +160,7 @@ table_data = parse_html_table(html_content)
 with open('output.json', 'w', encoding='utf-8') as f:
     json.dump(table_data, f, indent=2)
 
-print("Parsed JSON with timestamps saved to output.json")
+print("Parsed JSON with IDs and timestamps saved to output.json")
+
 
 
