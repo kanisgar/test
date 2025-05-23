@@ -254,6 +254,72 @@ NEW DASHBOARD CODE WITH DISTINCT LOGIC
     </panel>
   </row>
 </dashboard>
+---------------------------------------------------------------
+This is with taking unique value (currently using)
+import json
+import re
+from datetime import datetime
+
+def parse_html_table(html):
+    # Find the first <table ...> ... </table>
+    table_match = re.search(r'<table[^>]*>(.*?)</table>', html, re.DOTALL | re.IGNORECASE)
+    if not table_match:
+        print("No table found")
+        return []
+
+    table_html = table_match.group(1)
+
+    # Extract rows
+    rows = re.findall(r'<tr[^>]*>(.*?)</tr>', table_html, re.DOTALL | re.IGNORECASE)
+    if not rows:
+        print("No rows found in table")
+        return []
+
+    # Headers
+    headers = re.findall(r'<th[^>]*>(.*?)</th>', rows[0], re.DOTALL | re.IGNORECASE)
+    headers = [re.sub(r'<.*?>', '', h).strip() for h in headers]
+
+    data = []
+    current_ts = datetime.now().isoformat()
+
+    for idx, row_html in enumerate(rows[1:], start=1):
+        cols = re.findall(r'<td[^>]*>(.*?)</td>', row_html, re.DOTALL | re.IGNORECASE)
+        cols = [re.sub(r'<.*?>', '', c).strip() for c in cols]
+        cols = [c if c else "blank" for c in cols]
+
+        if len(cols) == len(headers):
+            entry = dict(zip(headers, cols))
+            entry["id"] = idx
+            entry["timestamp"] = current_ts
+
+            # Derive "target table" from "Target Table Name"
+            original_name = entry.get("Target Table Name", "NA")
+            if original_name.upper() in ["NA", "BLANK"]:
+                derived = "NA"
+            else:
+                derived = original_name.split(".")[0] + "." + original_name.split(".")[1] if "$" in original_name else original_name
+                # If it has $ partition suffix, remove it
+                derived = re.split(r'\$|\s', derived)[0]
+
+            entry["target table"] = derived
+
+            data.append(entry)
+        else:
+            print(f"Skipping row {idx} due to column mismatch")
+
+    return data
+
+# Read your HTML file
+with open('status.html', 'r', encoding='utf-8') as f:
+    html_content = f.read()
+
+table_data = parse_html_table(html_content)
+
+# Output JSON
+with open('output.json', 'w', encoding='utf-8') as f:
+    json.dump(table_data, f, indent=2)
+
+print("Parsed JSON with IDs, timestamps, and derived target tables saved to output.json")
 
 -----------------------------------------------------------
 import json
