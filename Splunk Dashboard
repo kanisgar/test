@@ -108,6 +108,7 @@
 -----------------------------------------------------------
 import json
 import re
+from datetime import datetime
 
 def parse_html_table(html):
     # Find the first <table ...> ... </table>
@@ -129,6 +130,9 @@ def parse_html_table(html):
     headers = [re.sub(r'<.*?>', '', h).strip() for h in headers]
 
     data = []
+    # Get current timestamp in ISO format
+    current_ts = datetime.now().isoformat()
+
     # Process each data row (skip header)
     for row_html in rows[1:]:
         # Extract all <td> contents, ignoring tags inside td
@@ -140,6 +144,7 @@ def parse_html_table(html):
 
         if len(cols) == len(headers):
             entry = dict(zip(headers, cols))
+            entry["timestamp"] = current_ts  # Add timestamp field
             data.append(entry)
         else:
             print("Skipping a row due to column mismatch")
@@ -156,5 +161,6 @@ table_data = parse_html_table(html_content)
 with open('output.json', 'w', encoding='utf-8') as f:
     json.dump(table_data, f, indent=2)
 
-print("Parsed JSON saved to output.json")
+print("Parsed JSON with timestamps saved to output.json")
+
 
