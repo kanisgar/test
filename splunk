@@ -70,6 +70,34 @@ while read payload; do
     -H "Content-Type: application/json" \
     -d "$wrapped_payload"
 done
+------------------------------------
+The same above script is now written with python
+import json
+import subprocess
+
+HEC_URL = "https://your-splunk-server:8088/services/collector/event"
+HEC_TOKEN = "YOUR_SPLUNK_HEC_TOKEN"
+
+# Load the JSON data
+with open("output.json") as f:
+    data = json.load(f)
+
+for entry in data:
+    payload = {
+        "event": entry,
+        "sourcetype": "your_sourcetype",
+        "index": "your_index"
+    }
+    # Convert to JSON string
+    payload_str = json.dumps(payload)
+
+    # Send using curl (avoid need for requests library)
+    subprocess.run([
+        "curl", "-k", "-X", "POST", HEC_URL,
+        "-H", f"Authorization: Splunk {HEC_TOKEN}",
+        "-H", "Content-Type: application/json",
+        "-d", payload_str
+    ])
 
 
 ------------------------
