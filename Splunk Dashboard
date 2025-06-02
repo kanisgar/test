@@ -255,7 +255,78 @@ NEW DASHBOARD CODE WITH DISTINCT LOGIC
   </row>
 </dashboard>
 ---------------------------------------------------------------
-This is with taking unique value (currently using)
+import json
+import re
+from datetime import datetime
+
+def parse_html_table(html):
+    # Find the first <table ...> ... </table>
+    table_match = re.search(r'<table[^>]*>(.*?)</table>', html, re.DOTALL | re.IGNORECASE)
+    if not table_match:
+        print("No table found")
+        return []
+
+    table_html = table_match.group(1)
+
+    # Extract all rows
+    rows = re.findall(r'<tr[^>]*>(.*?)</tr>', table_html, re.DOTALL | re.IGNORECASE)
+    if not rows:
+        print("No rows found in table")
+        return []
+
+    # Extract headers
+    headers = re.findall(r'<th[^>]*>(.*?)</th>', rows[0], re.DOTALL | re.IGNORECASE)
+    headers = [re.sub(r'<.*?>', '', h).strip() for h in headers]
+
+    data = []
+    current_ts = datetime.now().isoformat()
+
+    # Process data rows
+    for idx, row_html in enumerate(rows[1:], start=1):
+        cols = re.findall(r'<td[^>]*>(.*?)</td>', row_html, re.DOTALL | re.IGNORECASE)
+        cols = [re.sub(r'<.*?>', '', c).strip() for c in cols]
+        cols = [c if c else "blank" for c in cols]
+
+        if len(cols) == len(headers):
+            entry = dict(zip(headers, cols))
+            entry["id"] = idx
+            entry["timestamp"] = current_ts
+
+            # Derive "table name" from "Target Table"
+            target = entry.get("Target Table", "NA")
+            if target.upper() in ["NA", "BLANK"] or "." not in target:
+                entry["table name"] = "NA"
+            else:
+                entry["table name"] = ".".join(target.split(".")[:2])
+
+            # Derive "nanon table name" from "Nanon Table"
+            nanon = entry.get("Nanon Table", "NA")
+            if nanon.upper() in ["NA", "BLANK"] or "." not in nanon:
+                entry["nanon table name"] = "NA"
+            else:
+                entry["nanon table name"] = ".".join(nanon.split(".")[:2])
+
+            data.append(entry)
+        else:
+            print(f"Skipping row {idx} due to column mismatch")
+
+    return data
+
+# Read your HTML file
+with open('status.html', 'r', encoding='utf-8') as f:
+    html_content = f.read()
+
+table_data = parse_html_table(html_content)
+
+# Output JSON
+with open('output.json', 'w', encoding='utf-8') as f:
+    json.dump(table_data, f, indent=2)
+
+print("Parsed JSON with IDs, timestamps, table names and nanon table names saved to output.json")
+
+
+-------------------------------------------------------------
+This is with taking unique value (No nanon handled)
 import json
 import re
 from datetime import datetime
