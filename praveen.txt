@@ -1,2 +1,1 @@
-
-ihai
+while read wf date; do for app in $(oozie job -info "$wf" 2>/dev/null | grep -i quality | grep -oh 'application_[0-9]*_[0-9]*'); do echo "$wf $date $app"; done; done < wf.txt
