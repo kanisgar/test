@@ -1,1 +1,4 @@
 
+val cols = df.columns
+val sql = cols.map(c => s"CASE WHEN d.$c <=> l.$c THEN 'OK' ELSE 'DIFF' END AS ${c}_check").mkString(",\n")
+println(sql)
