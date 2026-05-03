@@ -1,4 +1,36 @@
+val cols = ddf.columns
 
-val cols = df.columns
-val sql = cols.map(c => s"CASE WHEN d.$c <=> l.$c THEN 'OK' ELSE 'DIFF' END AS ${c}_check").mkString(",\n")
-println(sql)
+def esc(c: String) = s"`$c`"
+
+val colChecks = cols.map { c =>
+  s"""
+  CASE 
+    WHEN TRIM(CAST(d.${esc(c)} AS STRING)) <=> TRIM(CAST(l.${esc(c)} AS STRING))
+    THEN 'OK'
+    ELSE CONCAT('DIFF | d=', d.${esc(c)}, ' | l=', l.${esc(c)})
+  END AS ${c}_check
+  """
+}.mkString(",\n")
+
+val sql =
+s"""
+WITH d AS (
+  SELECT *, monotonically_increasing_id() AS rn FROM ddf
+),
+l AS (
+  SELECT *, monotonically_increasing_id() AS rn FROM loans_agg
+)
+SELECT
+  d.*,
+  l.*,
+  $colChecks
+FROM d
+JOIN l
+ON d.rn = l.rn
+WHERE NOT (
+  ${cols.map(c => s"TRIM(CAST(d.`$c` AS STRING)) <=> TRIM(CAST(l.`$c` AS STRING))").mkString(" AND ")}
+)
+"""
+
+val result = spark.sql(sql)
+result.show(false)
