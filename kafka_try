@@ -1,0 +1,46 @@
+// Step 1 - Read from Kafka
+val df = spark.read
+  .format("kafka")
+  .option("kafka.bootstrap.servers", "<my-bootstrap-servers>")
+  .option("subscribe", "csp-card-token-public-nbdk-test02")
+  .option("startingOffsets", "earliest")
+  .option("endingOffsets", "latest")
+  .option("kafka.security.protocol", "SSL")
+  .option("kafka.ssl.truststore.location", "/home/z009994-udm/ssl/NSIGHT.truststore.jks")
+  .option("kafka.ssl.truststore.password", "<truststore-password>")
+  .option("kafka.ssl.keystore.location", "/home/z009994-udm/ssl/NSIGHT.keystore.jks")
+  .option("kafka.ssl.keystore.password", "<keystore-password>")
+  .option("kafka.ssl.key.password", "<key-password>")
+  .load()
+
+// Step 2 - Define your Avro schema (from what you showed me)
+val schema = """
+{
+  "type": "record",
+  "name": "MessageDetails",
+  "namespace": "com.nordea.csp.token.canonical.events",
+  "fields": [
+    {"name": "eventCode", "type": {"type": "enum", "name": "EventCode", "symbols": ["CardTokenDigitalization","CardTokenCreated","CardTokenActivated","CardTokenUpdated","CardTokenSuspended","CardTokenResumed","CardTokenDeleted"]}},
+    {"name": "updateTimestamp", "type": ["null", {"type": "string", "avro.java.string": "String"}]},
+    {"name": "msgPublishedTimestamp", "type": ["null", {"type": "string", "avro.java.string": "String"}]},
+    {"name": "tokenDetails", "type": {"type": "record", "name": "TokenDetails", "fields": [
+      {"name": "tokenIdentifier", "type": ["null", {"type": "string", "avro.java.string": "String"}], "default": null},
+      {"name": "expiryDate", "type": ["null", {"type": "string", "avro.java.string": "String"}], "default": null},
+      {"name": "creationDateTime", "type": ["null", {"type": "string", "avro.java.string": "String"}]}
+    ]}}
+  ]
+}
+"""
+
+// Step 3 - Deserialize Avro and show as table
+import org.apache.spark.sql.avro.functions.from_avro
+import org.apache.spark.sql.functions._
+
+val result = df
+  .select(from_avro(
+    expr("substring(value, 6)"),  // skip first 5 bytes (Avro magic bytes)
+    schema
+  ).as("data"))
+  .select("data.*")
+
+result.show(5, truncate = false)
