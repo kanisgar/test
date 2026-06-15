@@ -1,0 +1,78 @@
+val flattened = result.select(
+  // Top level fields
+  col("eventCode"),
+  col("updateTimestamp"),
+  col("msgPublishedTimestamp"),
+
+  // tokenDetails struct
+  col("tokenDetails.tokenIdentifier"),
+  col("tokenDetails.expiryDate"),
+  col("tokenDetails.creationDateTime"),
+  col("tokenDetails.initialActivationDateTime"),
+  col("tokenDetails.tokenType"),
+  col("tokenDetails.tokenReferenceId"),
+  col("tokenDetails.panReferenceId"),
+  col("tokenDetails.activeTokensCount"),
+  col("tokenDetails.inactiveTokensCount"),
+  col("tokenDetails.suspendedTokensCount"),
+
+  // tokenDetails.cardTokenLifeCycle struct
+  col("tokenDetails.cardTokenLifeCycle.status"),
+
+  // tokenDetails.encryptedDetails struct
+  col("tokenDetails.encryptedDetails.encryptedData"),
+  col("tokenDetails.encryptedDetails.algorithmIdentifier"),
+  col("tokenDetails.encryptedDetails.keyIdentifier"),
+
+  // tokenDetails.cardDetails struct
+  col("tokenDetails.cardDetails.cardIdentifier"),
+  col("tokenDetails.cardDetails.maskedCardNumber"),
+  col("tokenDetails.cardDetails.cardScheme"),
+  col("tokenDetails.cardDetails.expiryDate"),
+
+  // tokenDetails.cardDetails.cardholder struct
+  col("tokenDetails.cardDetails.cardholder.partyIdentifier"),
+  col("tokenDetails.cardDetails.cardholder.partyIdentifierType"),
+
+  // tokenDetails.tokenRequestor struct
+  col("tokenDetails.tokenRequestor.identifier"),
+
+  // tokenDetails.tokenRequestor.digitalWallet struct
+  col("tokenDetails.tokenRequestor.digitalWallet.identifier"),
+  col("tokenDetails.tokenRequestor.digitalWallet.identifierType"),
+
+  // tokenDetails.tokenRequestor.digitalWallet.digitalWalletAccount struct
+  col("tokenDetails.tokenRequestor.digitalWallet.digitalWalletAccount.emailHash"),
+  col("tokenDetails.tokenRequestor.digitalWallet.digitalWalletAccount.identifier"),
+
+  // tokenDetails.tokenRequestor.deviceDetails struct
+  col("tokenDetails.tokenRequestor.deviceDetails.deviceIdentifier"),
+  col("tokenDetails.tokenRequestor.deviceDetails.deviceIdentifierType"),
+  col("tokenDetails.tokenRequestor.deviceDetails.deviceType"),
+  col("tokenDetails.tokenRequestor.deviceDetails.deviceNumber"),
+
+  // tokenDetails.tokenRequestor.deviceDetails.internetProtocolAddress struct
+  col("tokenDetails.tokenRequestor.deviceDetails.internetProtocolAddress.ipAddressIdentifier"),
+
+  // tokenDetails.tokenProvisioningDetails struct
+  col("tokenDetails.tokenProvisioningDetails.tokenRequestInitiationMethod"),
+  col("tokenDetails.tokenProvisioningDetails.tokenDeviceScore"),
+  col("tokenDetails.tokenProvisioningDetails.tokenAccountScore"),
+  col("tokenDetails.tokenProvisioningDetails.tokenProvisioningLanguageCode"),
+  col("tokenDetails.tokenProvisioningDetails.tokenProvisioningScore"),
+
+  // tokenProvisioningScoreReasonCodes — ARRAY needs explode
+  explode_outer(col("tokenDetails.tokenProvisioningDetails.tokenProvisioningScoreReasonCodes")).as("tokenProvisioningScoreReasonCode"),
+
+  // tokenDetails.tokenProvisioningDetails.tokenProvisioningResultDetails struct
+  col("tokenDetails.tokenProvisioningDetails.tokenProvisioningResultDetails.actionCode"),
+  col("tokenDetails.tokenProvisioningDetails.tokenProvisioningResultDetails.stipReasonCode"),
+  col("tokenDetails.tokenProvisioningDetails.tokenProvisioningResultDetails.cvv2ResultCode"),
+  col("tokenDetails.tokenProvisioningDetails.tokenProvisioningResultDetails.addressVerificationResults"),
+
+  // cardholderAgreement struct
+  col("cardholderAgreement.cardholderAgreementCompanyCode")
+)
+
+// Show as table
+flattened.show(5, truncate = false)
